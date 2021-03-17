@@ -1,5 +1,6 @@
-package find_duplicate
+package main
 
 func main() {
+	helper
 
 }

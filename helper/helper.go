@@ -6,16 +6,23 @@ import (
 	"path/filepath"
 )
 
-func finder(filePath sting) {
-	var files []string
+type fileInfo struct {
+	fileSize int64
+	fileName string
+}
+
+func Finder(filePath string) {
+	files := make(map[string]int64)
 	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		files = append(files, path)
+		if !info.IsDir() {
+			files[path] = info.Size()
+		}
 		return nil
 	})
 	if err != nil {
 		fmt.Println("error occurs:", err)
 	}
-	for _, file := range files {
-		fmt.Println(file)
+	for name, size := range files {
+		fmt.Println(name, size)
 	}
 }

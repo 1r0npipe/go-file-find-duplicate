@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"sync/atomic"
 )
 
 type File struct {
@@ -56,11 +57,11 @@ func ScanAndFindFiles(filePath string) {
 			file.Id = filename + strconv.Itoa(int(info.Size()))
 			if oneFile, ok := WalkedFiles[file.Id]; ok && (oneFile.Size == info.Size()) {
 				Duplicates.File[file.Id] = append(Duplicates.File[file.Id], file)
-				FilesDuplicates++
+				atomic.AddInt64(&FilesDuplicates, 1)
 			}
 			WalkedFiles[file.Id] = file
 		}
-		FileCount++
+		atomic.AddInt64(&FileCount, 1)
 		return nil
 	})
 	if err != nil {

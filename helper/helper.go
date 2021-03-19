@@ -30,21 +30,27 @@ var (
 // DuplicatesFind main function to find all duplicates
 // Input: "filePath" directory to start searching of duplicates
 // "flag" - if true remove, if false - show
-func DuplicatesFind(filePath string, flag bool) {
+func DuplicatesFind(filePath string, flag bool) error {
 	dup := make(chan *File)
-	ScanAndFindFiles(filePath)
-
+	err := ScanAndFindFiles(filePath)
+	if err != nil {
+		return fmt.Errorf("can't search due to this error %v\n", err)
+	}
 	go ReadDuplicates(dup)
 
 	for file := range dup {
-		ProcessDuplicates(file, flag)
+		err := ProcessDuplicates(file, flag)
+		if err != nil {
+			return fmt.Errorf("issue with processing of duplicates: %v\n", err)
+		}
 	}
+	return nil
 }
 
 // ScanAndFindFiles function is scanning the "filePath" dir
 // recursively and "duplicateFiles" provide the output of all duplicates
 // to wait while its working, please provide wait group variable
-func ScanAndFindFiles(filePath string) {
+func ScanAndFindFiles(filePath string) error {
 	var file File
 	WalkedFiles = make(map[string]File)
 	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
@@ -65,19 +71,18 @@ func ScanAndFindFiles(filePath string) {
 		return nil
 	})
 	if err != nil {
-		fmt.Println("error occurs:", err)
+		return fmt.Errorf("error occurs: %v", err)
 	}
+	return nil
 }
 
 // ReadDuplicates read all duplicates from structure
 // and push it to channel - "dupFiles"
 func ReadDuplicates(dupFiles chan *File) {
 	for key, value := range Duplicates.File {
-		//fmt.Println(value)
 		Duplicates.Lock()
 		for i := 0; i < len(value); i++ {
 			dupFiles <- &value[i]
-			//fmt.Println("value",value[i])
 		}
 		delete(Duplicates.File, key)
 		Duplicates.Unlock()
@@ -88,12 +93,17 @@ func ReadDuplicates(dupFiles chan *File) {
 // ProcessDuplicates process with duplicates:
 // if flag is true - delete, otherwise just show
 // also it needs channel to read the duplicates from
-func ProcessDuplicates(file *File, flag bool) {
+func ProcessDuplicates(file *File, flag bool) error {
 	if flag {
-		os.Remove(file.Path)
-		return
+		err := os.Remove(file.Path)
+		if err != nil {
+			return fmt.Errorf("can't remove file: %s by this error: %v\n",
+				file.Path, err)
+		}
+		return nil
 	}
 	fmt.Printf("Duplicate: %s, with size %d byte(-s);\n",
 		file.Path,
 		file.Size)
+	return nil
 }

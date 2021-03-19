@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/1r0npipe/go-file-find-duplicate/helper"
+	"log"
 )
 
 var (
@@ -11,7 +12,10 @@ var (
 
 func main() {
 
-	helper.DuplicatesFind("./", false)
+	err := helper.DuplicatesFind("./", false)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("Walked trhough: %d file(-s), found: %d duplicates\n",
 		helper.FileCount,
 		helper.FilesDuplicates)

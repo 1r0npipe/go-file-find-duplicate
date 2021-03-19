@@ -3,6 +3,7 @@ package helper
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -16,10 +17,6 @@ type File struct {
 }
 
 var (
-	//duplicates = struct {
-	//	//sync.RWMutex
-	//	m map[string][]string
-	//}{m : make(map[string][]string)}
 	FileCount       int64           = 0 // amount of all files to review
 	FilesDuplicates int64           = 0 // amount of duplicated files
 	WalkedFiles     map[string]File     // list of all files
@@ -30,43 +27,37 @@ var (
 )
 
 func DuplicatesFind(filePath string, flag bool, nCPU int) {
+	dup := make(chan *File)
+	ScanAndFindFiles(filePath)
 	var wg sync.WaitGroup
-	dup := make(chan File)
-	ScanAndFindFiles(filePath, dup, &wg)
-	wg.Wait()
-	if flag {
-		for dupFile := range dup {
-			fmt.Println(dupFile)
-		}
-		return
-	}
+	//go func (ch chan *File) {
+	//	ReadDuplicates(ch)
+	//}(dup)
 	for i := 0; i < nCPU; i++ {
-		go ProcessDuplicates(dup)
+		wg.Add(1)
+		go ProcessDuplicates(dup, flag)
+		wg.Done()
 	}
-
+	ReadDuplicates(dup)
+	defer close(dup)
 }
 
 // ScanAndFindFiles function is scanning the "filePath" dir
 // recursively and "duplicateFiles" provide the output of all duplicates
 // to wait while its working, please provide wait group variable
-func ScanAndFindFiles(filePath string, duplicateFiles chan File, wg *sync.WaitGroup) {
+func ScanAndFindFiles(filePath string) {
 	var file File
-	wg.Add(1)
-	defer func() {
-		close(duplicateFiles)
-		wg.Done()
-	}()
 	WalkedFiles = make(map[string]File)
 	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() {
 			file.Size = info.Size()
 			file.Path = path
 			_, filename := filepath.Split(info.Name())
+			file.Name = filename
 			// file ID will be the string with filename + his size in bytes
 			file.Id = filename + strconv.Itoa(int(info.Size()))
 			if oneFile, ok := WalkedFiles[file.Id]; ok && (oneFile.Size == info.Size()) {
 				Duplicates.File[file.Id] = append(Duplicates.File[file.Id], file)
-				duplicateFiles <- file
 				FilesDuplicates++
 			}
 			WalkedFiles[file.Id] = file
@@ -79,11 +70,25 @@ func ScanAndFindFiles(filePath string, duplicateFiles chan File, wg *sync.WaitGr
 	}
 }
 
-func ProcessDuplicates(ch <-chan File) {
+func ReadDuplicates(dupFiles chan *File) {
 	for key, value := range Duplicates.File {
+		//fmt.Println(value)
 		Duplicates.Lock()
-		dubFile := <-ch
-		fmt.Println(key, value, dubFile)
+		for i := 0; i < len(value); i++ {
+			dupFiles <- &value[i]
+			//fmt.Println("value",value[i])
+		}
+		delete(Duplicates.File, key)
 		Duplicates.Unlock()
 	}
+}
+func ProcessDuplicates(ch <-chan *File, flag bool) {
+	for file := range ch {
+		if flag {
+			os.Remove(file.Path)
+			return
+		}
+		fmt.Printf("Duplicate: %s, with size %d byte(-s)\n", file.Path, file.Size)
+	}
+
 }

@@ -29,17 +29,15 @@ var (
 // DuplicatesFind main function to find all duplicates
 // Input: "filePath" directory to start searching of duplicates
 // "flag" - if true remove, if false - show
-// "nCPU" - number of cores to use
-func DuplicatesFind(filePath string, flag bool, nCPU int) {
+func DuplicatesFind(filePath string, flag bool) {
 	dup := make(chan *File)
 	ScanAndFindFiles(filePath)
-	//var wg sync.WaitGroup
-	for i := 0; i < nCPU; i++ {
 
-		go ProcessDuplicates(dup, flag)
+	go ReadDuplicates(dup)
+
+	for file := range dup {
+		ProcessDuplicates(file, flag)
 	}
-	ReadDuplicates(dup)
-	defer close(dup)
 }
 
 // ScanAndFindFiles function is scanning the "filePath" dir
@@ -83,18 +81,18 @@ func ReadDuplicates(dupFiles chan *File) {
 		delete(Duplicates.File, key)
 		Duplicates.Unlock()
 	}
+	defer close(dupFiles)
 }
 
 // ProcessDuplicates process with duplicates:
 // if flag is true - delete, otherwise just show
 // also it needs channel to read the duplicates from
-func ProcessDuplicates(ch <-chan *File, flag bool) {
-	for file := range ch {
-		if flag {
-			os.Remove(file.Path)
-			return
-		}
-		fmt.Printf("Duplicate: %s, with size %d byte(-s)\n", file.Path, file.Size)
+func ProcessDuplicates(file *File, flag bool) {
+	if flag {
+		os.Remove(file.Path)
+		return
 	}
-
+	fmt.Printf("Duplicate: %s, with size %d byte(-s);\n",
+		file.Path,
+		file.Size)
 }

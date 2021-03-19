@@ -4,73 +4,68 @@
 //no option to delete one by one yet, however you can review first, then delete
 package helper
 
-import "testing"
+import (
+	"fmt"
+	"log"
+	"os"
+	"testing"
+)
 
 func ExampleDuplicatesFind() {
+	err := DuplicatesFind("./", false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Walked trhough: %d file(-s), found: %d duplicates\n",
+		FileCount,
+		FilesDuplicates)
+}
 
+func CreateDuplicates(path, nameDir, nameFile string, dep int) error {
+	for i := 1; i < dep; i++ {
+		err := os.Mkdir(path+nameDir, 0777)
+		if err != nil {
+			return fmt.Errorf("can't create directory: %v\n", err)
+		}
+		err = os.Chdir(nameDir)
+		if err != nil {
+			return fmt.Errorf("can't change directory: %v\n", err)
+		}
+		_, err = os.Create(nameFile)
+		if err != nil {
+			return fmt.Errorf("can't create file, because of: %v", err)
+		}
+	}
+	return nil
 }
 func TestDuplicatesFind(t *testing.T) {
-	type args struct {
-		filePath string
+	//path, err := os.Getwd()
+	var path = "./"
+	tests := []struct {
+		want     int64
+		path     string
+		nameDir  string
+		fileName string
 		flag     bool
-	}
-	tests := []struct {
-		name string
-		args args
 	}{
-		// TODO: Add test cases.
+		{3, path, "test", "test.txt", false},
+		{5, path, "testMore", "testMore.txt", true},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		})
-	}
-}
 
-func TestProcessDuplicates(t *testing.T) {
-	type args struct {
-		file *File
-		flag bool
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		// TODO: Add test cases.
-	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		})
-	}
-}
-
-func TestReadDuplicates(t *testing.T) {
-	type args struct {
-		dupFiles chan *File
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		})
-	}
-}
-
-func TestScanAndFindFiles(t *testing.T) {
-	type args struct {
-		filePath string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		})
+		err := CreateDuplicates(tt.path, tt.nameDir, tt.fileName, int(tt.want))
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(path)
+		err = DuplicatesFind("./", tt.flag)
+		if err != nil {
+			log.Fatalf("Test failed: %v", err)
+		}
+		if FilesDuplicates != tt.want {
+			t.Fatalf("Test has failed with want: %d, but got: %d\n",
+				tt.want,
+				FilesDuplicates)
+		}
 	}
 }

@@ -6,5 +6,4 @@ import (
 
 func main() {
 	helper.DuplicatesFind("./", false, 1)
-
 }

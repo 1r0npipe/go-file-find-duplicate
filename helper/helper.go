@@ -26,17 +26,17 @@ var (
 	}{File: make(map[string][]File)} // map of duplicated files
 )
 
+// DuplicatesFind main function to find all duplicates
+// Input: "filePath" directory to start searching of duplicates
+// "flag" - if true remove, if false - show
+// "nCPU" - number of cores to use
 func DuplicatesFind(filePath string, flag bool, nCPU int) {
 	dup := make(chan *File)
 	ScanAndFindFiles(filePath)
-	var wg sync.WaitGroup
-	//go func (ch chan *File) {
-	//	ReadDuplicates(ch)
-	//}(dup)
+	//var wg sync.WaitGroup
 	for i := 0; i < nCPU; i++ {
-		wg.Add(1)
+
 		go ProcessDuplicates(dup, flag)
-		wg.Done()
 	}
 	ReadDuplicates(dup)
 	defer close(dup)
@@ -70,6 +70,8 @@ func ScanAndFindFiles(filePath string) {
 	}
 }
 
+// ReadDuplicates read all duplicates from structure
+// and push it to channel - "dupFiles"
 func ReadDuplicates(dupFiles chan *File) {
 	for key, value := range Duplicates.File {
 		//fmt.Println(value)
@@ -82,6 +84,10 @@ func ReadDuplicates(dupFiles chan *File) {
 		Duplicates.Unlock()
 	}
 }
+
+// ProcessDuplicates process with duplicates:
+// if flag is true - delete, otherwise just show
+// also it needs channel to read the duplicates from
 func ProcessDuplicates(ch <-chan *File, flag bool) {
 	for file := range ch {
 		if flag {

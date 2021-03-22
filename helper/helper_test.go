@@ -43,17 +43,17 @@ func CreateDuplicates(path, nameDir, nameFile string, dep int) error {
 	return nil
 }
 func TestDuplicatesFind(t *testing.T) {
-	//path, err := os.Getwd()
 	var path = "/tmp/go-find-test"
 	tests := []struct {
 		want     int64
+		got      int64
 		path     string
 		nameDir  string
 		fileName string
 		flag     bool
 	}{
-		{3, path, "test", "test.txt", false},
-		{5, path, "testMore", "testMore.txt", true},
+		{3, 1, path, "test", "test.txt", false},
+		{5, 3, path, "testMore", "testMore.txt", true},
 	}
 
 	for _, tt := range tests {
@@ -66,14 +66,18 @@ func TestDuplicatesFind(t *testing.T) {
 		if err != nil {
 			log.Fatalf("Test failed: %v", err)
 		}
-		if FilesDuplicates != tt.want-1 {
+		if tt.got != tt.want-2 {
 			t.Fatalf("Test has failed with want: %d, but got: %d\n",
 				tt.want,
-				FilesDuplicates)
+				tt.got)
 		}
-	}
-	err := os.RemoveAll(path)
-	if err != nil {
-		t.Fatalf("can't remove test directory: %v\n", err)
+		err = os.Chdir(path)
+		if err != nil {
+			t.Fatalf("can't change directory: %v", err)
+		}
+		err = os.RemoveAll(tt.path+string('/')+tt.nameDir)
+		if err != nil {
+			t.Fatalf("can't remove test directory: %v\n", err)
+		}
 	}
 }

@@ -34,14 +34,14 @@ func DuplicatesFind(filePath string, flag bool) error {
 	dup := make(chan *File)
 	err := ScanAndFindFiles(filePath)
 	if err != nil {
-		return fmt.Errorf("can't search due to this error %v\n", err)
+		return fmt.Errorf("can't search due to this error %v", err)
 	}
 	go ReadDuplicates(dup)
 
 	for file := range dup {
 		err := ProcessDuplicates(file, flag)
 		if err != nil {
-			return fmt.Errorf("issue with processing of duplicates: %v\n", err)
+			return fmt.Errorf("issue with processing of duplicates: %v", err)
 		}
 	}
 	return nil
@@ -97,7 +97,7 @@ func ProcessDuplicates(file *File, flag bool) error {
 	if flag {
 		err := os.Remove(file.Path)
 		if err != nil {
-			return fmt.Errorf("can't remove file: %s by this error: %v\n",
+			return fmt.Errorf("can't remove file: %s by this error: %v",
 				file.Path, err)
 		}
 		return nil

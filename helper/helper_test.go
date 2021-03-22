@@ -43,7 +43,7 @@ func CreateDuplicates(path, nameDir, nameFile string, dep int) error {
 	return nil
 }
 func TestDuplicatesFind(t *testing.T) {
-	var path = "/tmp/go-find-test"
+	var path = "/tmp"
 	tests := []struct {
 		want     int64
 		got      int64

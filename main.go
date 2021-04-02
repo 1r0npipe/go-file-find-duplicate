@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/1r0npipe/go-file-find-duplicate/helper"
 	"log"
+	"github.com/1r0npipe/go-file-find-duplicate/helper"
+	"go.uber.org/zap"
 )
 
 var (
@@ -15,12 +15,16 @@ var (
 )
 
 func main() {
+	logger:= zap.NewExample()
+	defer logger.Sync()
+	
 	flag.Parse()
 	err := helper.DuplicatesFind(*dirPath, *del)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Walked trhough: %d file(-s), found: %d duplicates\n",
-		helper.FileCount,
-		helper.FilesDuplicates)
+	logger.Info("Duplicates searcher statistic",
+		zap.Int64("duplicates_found", helper.FilesDuplicates),
+		zap.Int64("walked_files", helper.FileCount),
+	)
 }

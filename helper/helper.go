@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"go.uber.org/zap"
 )
 
 type File struct {
@@ -25,12 +26,14 @@ var (
 		sync.RWMutex
 		File map[string][]File
 	}{File: make(map[string][]File)} // map of duplicated files
+	logger zap.Logger
 )
 
 // DuplicatesFind main function to find all duplicates
 // Input: "filePath" directory to start searching of duplicates
 // "flag" - if true remove, if false - show
 func DuplicatesFind(filePath string, flag bool) error {
+
 	dup := make(chan *File)
 	err := ScanAndFindFiles(filePath)
 	if err != nil {
@@ -90,10 +93,13 @@ func ReadDuplicates(dupFiles chan *File) {
 	defer close(dupFiles)
 }
 
+
 // ProcessDuplicates process with duplicates:
 // if flag is true - delete, otherwise just show
 // also it needs channel to read the duplicates from
 func ProcessDuplicates(file *File, flag bool) error {
+	logger:= zap.NewExample()
+	defer logger.Sync()
 	if flag {
 		err := os.Remove(file.Path)
 		if err != nil {
@@ -102,8 +108,9 @@ func ProcessDuplicates(file *File, flag bool) error {
 		}
 		return nil
 	}
-	fmt.Printf("Duplicate: %s, with size %d byte(-s);\n",
-		file.Path,
-		file.Size)
+	logger.Info("duplicate",
+		zap.String("path", file.Path),
+		zap.Int64("sizeB", file.Size),
+	)
 	return nil
 }

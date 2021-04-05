@@ -2,13 +2,13 @@ package helper
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"sync/atomic"
-	"go.uber.org/zap"
 )
 
 type File struct {
@@ -26,14 +26,14 @@ var (
 		sync.RWMutex
 		File map[string][]File
 	}{File: make(map[string][]File)} // map of duplicated files
-	logger zap.Logger
 )
 
 // DuplicatesFind main function to find all duplicates
 // Input: "filePath" directory to start searching of duplicates
 // "flag" - if true remove, if false - show
-func DuplicatesFind(filePath string, flag bool) error {
-
+func DuplicatesFind(filePath string, flag bool, debugMsg bool) error {
+	logger := zap.NewExample()
+	defer logger.Sync()
 	dup := make(chan *File)
 	err := ScanAndFindFiles(filePath)
 	if err != nil {
@@ -42,7 +42,7 @@ func DuplicatesFind(filePath string, flag bool) error {
 	go ReadDuplicates(dup)
 
 	for file := range dup {
-		err := ProcessDuplicates(file, flag)
+		err := ProcessDuplicates(file, flag, logger, debugMsg)
 		if err != nil {
 			return fmt.Errorf("issue with processing of duplicates: %v", err)
 		}
@@ -93,13 +93,11 @@ func ReadDuplicates(dupFiles chan *File) {
 	defer close(dupFiles)
 }
 
-
 // ProcessDuplicates process with duplicates:
 // if flag is true - delete, otherwise just show
 // also it needs channel to read the duplicates from
-func ProcessDuplicates(file *File, flag bool) error {
-	logger:= zap.NewExample()
-	defer logger.Sync()
+func ProcessDuplicates(file *File, flag bool, logger *zap.Logger, showDebugMsg bool) error {
+
 	if flag {
 		err := os.Remove(file.Path)
 		if err != nil {
@@ -108,9 +106,11 @@ func ProcessDuplicates(file *File, flag bool) error {
 		}
 		return nil
 	}
-	logger.Info("duplicate",
-		zap.String("path", file.Path),
-		zap.Int64("sizeB", file.Size),
-	)
+	if showDebugMsg {
+		logger.Debug("duplicate",
+			zap.String("path", file.Path),
+			zap.Int64("sizeB", file.Size),
+		)
+	}
 	return nil
 }

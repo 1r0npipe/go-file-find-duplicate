@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
 	"github.com/1r0npipe/go-file-find-duplicate/helper"
 	"go.uber.org/zap"
+	"log"
 )
 
 var (
@@ -12,14 +12,18 @@ var (
 		"Directory to use as root for searching of duplicates, by default current directory")
 	del = flag.Bool("delete", false,
 		"By default it will just show the duplicates, use \"-delete\" if want to delete")
+	debug = flag.Bool("debug", false, "show all duplicated files with information")
 )
 
 func main() {
-	logger:= zap.NewExample()
+	logger := zap.NewExample()
 	defer logger.Sync()
-	
 	flag.Parse()
-	err := helper.DuplicatesFind(*dirPath, *del)
+	showDegunMsg := false
+	if *debug {
+		showDegunMsg = true
+	}
+	err := helper.DuplicatesFind(*dirPath, *del, showDegunMsg)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	//"testing"
+	"testing"
 )
 
 func ExampleDuplicatesFind() {
@@ -42,42 +42,43 @@ func CreateDuplicates(path, nameDir, nameFile string, dep int) error {
 	}
 	return nil
 }
-// func TestDuplicatesFind(t *testing.T) {
-// 	var path = "/tmp"
-// 	tests := []struct {
-// 		want     int64
-// 		got      int64
-// 		path     string
-// 		nameDir  string
-// 		fileName string
-// 		flag     bool
-// 	}{
-// 		{3, 1, path, "test", "test.txt", false},
-// 		{5, 3, path, "testMore", "testMore.txt", true},
-// 	}
 
-// 	for _, tt := range tests {
-// 		err := CreateDuplicates(tt.path, tt.nameDir, tt.fileName, int(tt.want))
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 		fmt.Println(path)
-// 		err = DuplicatesFind(tt.path, tt.flag)
-// 		if err != nil {
-// 			log.Fatalf("Test failed: %v", err)
-// 		}
-// 		if tt.got != tt.want-2 {
-// 			t.Fatalf("Test has failed with want: %d, but got: %d\n",
-// 				tt.want,
-// 				tt.got)
-// 		}
-// 		err = os.Chdir(path)
-// 		if err != nil {
-// 			t.Fatalf("can't change directory: %v", err)
-// 		}
-// 		err = os.RemoveAll(tt.path+string('/')+tt.nameDir)
-// 		if err != nil {
-// 			t.Fatalf("can't remove test directory: %v\n", err)
-// 		}
-// 	}
-// }
+func TestDuplicatesFind(t *testing.T) {
+	var path = "/tmp/"
+	tests := []struct {
+		want     int64
+		got      int64
+		path     string
+		nameDir  string
+		fileName string
+		flag     bool
+	}{
+		{3, 1, path, "test", "test.txt", false},
+		{5, 3, path, "testMore", "testMore.txt", false},
+	}
+
+	for _, tt := range tests {
+		err := CreateDuplicates(tt.path, tt.nameDir, tt.fileName, int(tt.want))
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(path)
+		err = DuplicatesFind(os.DirFS(tt.path), tt.flag)
+		if err != nil {
+			log.Fatalf("Test failed: %v", err)
+		}
+		if tt.got != tt.want-2 {
+			t.Fatalf("Test has failed with want: %d, but got: %d\n",
+				tt.want,
+				tt.got)
+		}
+		err = os.Chdir(path)
+		if err != nil {
+			t.Fatalf("can't change directory: %v", err)
+		}
+		err = os.RemoveAll(tt.path + string('/') + tt.nameDir)
+		if err != nil {
+			t.Fatalf("can't remove test directory: %v\n", err)
+		}
+	}
+}

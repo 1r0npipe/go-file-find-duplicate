@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Walked trhough: %d file(-s), found: %d duplicates\n",
+	fmt.Printf("Walked through: %d file(-s), found: %d duplicates\n",
 		helper.FileCount,
 		helper.FilesDuplicates)
 }

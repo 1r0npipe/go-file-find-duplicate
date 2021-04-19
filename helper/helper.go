@@ -30,9 +30,9 @@ var (
 // DuplicatesFind main function to find all duplicates
 // Input: "filePath" directory to start searching of duplicates
 // "flag" - if true remove, if false - show
-func DuplicatesFind(filePath string, flag bool) error {
+func DuplicatesFind(fileSystem fs.FS, flag bool) error {
 	dup := make(chan *File)
-	err := ScanAndFindFiles(filePath)
+	err := ScanAndFindFiles(fileSystem)
 	if err != nil {
 		return fmt.Errorf("can't search due to this error %v", err)
 	}
@@ -50,18 +50,21 @@ func DuplicatesFind(filePath string, flag bool) error {
 // ScanAndFindFiles function is scanning the "filePath" dir
 // recursively and "duplicateFiles" provide the output of all duplicates
 // to wait while its working, please provide wait group variable
-func ScanAndFindFiles(filePath string) error {
+//func ScanAndFindFiles(filePath string) error {
+func ScanAndFindFiles(fileSystem fs.FS) error {
 	var file File
 	WalkedFiles = make(map[string]File)
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+	//err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+	err := fs.WalkDir(fileSystem, ".", func(path string, info fs.DirEntry, err error) error {
+		fileInfo, _ := info.Info()
 		if !info.IsDir() {
-			file.Size = info.Size()
+			file.Size = fileInfo.Size()
 			file.Path = path
 			_, filename := filepath.Split(info.Name())
 			file.Name = filename
 			// file ID will be the string with filename + his size in bytes
-			file.Id = filename + strconv.Itoa(int(info.Size()))
-			if oneFile, ok := WalkedFiles[file.Id]; ok && (oneFile.Size == info.Size()) {
+			file.Id = filename + strconv.Itoa(int(fileInfo.Size()))
+			if oneFile, ok := WalkedFiles[file.Id]; ok && (oneFile.Size == fileInfo.Size()) {
 				Duplicates.File[file.Id] = append(Duplicates.File[file.Id], file)
 				atomic.AddInt64(&FilesDuplicates, 1)
 			}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/1r0npipe/go-file-find-duplicate/helper"
 	"log"
+	"os"
 )
 
 var (
@@ -16,7 +17,8 @@ var (
 
 func main() {
 	flag.Parse()
-	err := helper.DuplicatesFind(*dirPath, *del)
+	fileSystem := os.DirFS(*dirPath)
+	err := helper.DuplicatesFind(fileSystem, *del)
 	if err != nil {
 		log.Fatal(err)
 	}

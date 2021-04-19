@@ -12,11 +12,11 @@ import (
 )
 
 func ExampleDuplicatesFind() {
-	err := DuplicatesFind("./", false)
+	err := DuplicatesFind("./", false, true)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Walked trhough: %d file(-s), found: %d duplicates\n",
+	fmt.Printf("Walked through: %d file(-s), found: %d duplicates\n",
 		FileCount,
 		FilesDuplicates)
 }
@@ -62,7 +62,7 @@ func TestDuplicatesFind(t *testing.T) {
 			log.Fatal(err)
 		}
 		fmt.Println(path)
-		err = DuplicatesFind(tt.path, tt.flag)
+		err = DuplicatesFind(tt.path, tt.flag, true)
 		if err != nil {
 			log.Fatalf("Test failed: %v", err)
 		}
@@ -75,7 +75,7 @@ func TestDuplicatesFind(t *testing.T) {
 		if err != nil {
 			t.Fatalf("can't change directory: %v", err)
 		}
-		err = os.RemoveAll(tt.path+string('/')+tt.nameDir)
+		err = os.RemoveAll(tt.path + string('/') + tt.nameDir)
 		if err != nil {
 			t.Fatalf("can't remove test directory: %v\n", err)
 		}
